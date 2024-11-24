@@ -16,12 +16,6 @@ The `gen_conf.py` script automates the generation of configuration files for eac
 
 In addition to generating configuration files, the `gen_conf.py` script also generates a set of MX-ONE shell commands. These commands, saved in the `auth_code.sh` file, are used in the PBX CLI to set authentication codes for each extension. When using the `MD5a1` format for authentication codes, the passwords are securely hashed and are not visible in plain text. However, the clear-text passwords are saved in the `auth.txt` output file.
 
-### Encrypting Configuration Files
-
-For enhanced security, the generated configuration (`cfg`) files can be encrypted using the `anacrypt` utility. After encryption, the configuration files are stored as `tuz` files, which are then uploaded to the Configuration Server, replacing the original unencrypted `cfg` files.
-
-This process ensures secure and efficient registration and configuration of SIP phones on the MX-ONE PBX, leveraging automated scripts and encryption for added security.
-
 ## Input file "mac.csv" format
 MAC,EXTENTION,CSP
 
@@ -78,7 +72,9 @@ auth_code -i -d 102 --csp 0 --cil 102 --customer 0 --hash-type md5a1 --auth-code
 auth_code -i -d 103 --csp 1 --cil 103 --customer 0 --hash-type md5a1 --auth-code Oi2qiGhTUKzppQ
 ```
 
-## Encrypting Configuration Files with `anacrypt` Utility
+## Encrypting Configuration Files
+
+For enhanced security, the generated configuration (`cfg`) files can be encrypted using the `anacrypt` utility. After encryption, the configuration files are stored as `tuz` files, which are then uploaded to the Configuration Server, replacing the original unencrypted `cfg` files.
 
 The `anacrypt` utility, available from the vendor's Download Center, allows you to securely encrypt configuration files for SIP phones. It encrypts all `cfg` files in the current directory (`./`) into `tuz` format using a specified password.
 
@@ -90,8 +86,8 @@ The `anacrypt` utility, available from the vendor's Download Center, allows you 
 
 3. **Download and Decrypt**: The SIP phone will then download the encrypted `tuz` files from the Configuration Server, decrypt them using the provided password, and automatically apply the configuration.
 
-This process ensures that your SIP phone configurations are securely transmitted and deployed, minimizing the risk of unauthorized access.
-
 ```sh
 anacrypt -d ./ -m -p password1234 -i
 ```
+
+This process ensures secure and efficient registration and configuration of SIP phones on the MX-ONE PBX, leveraging automated scripts and encryption for added security.
