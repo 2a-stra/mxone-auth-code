@@ -1,4 +1,4 @@
-# Generate SIP-phones configuration files for MX-ONE
+# Generate SIP and analog phones configuration files for MX-ONE
 
 ## SIP Phone Registration and Configuration with MX-ONE PBX
 
@@ -8,13 +8,13 @@ When SIP phones register with the MX-ONE PBX, you can link each phone's unique M
 - Authentication code
 - SIP server IP addresses
 
-### Config File Generation with `gen_conf.py`
+### Config File Generation with `gen_ext_conf.py`
 
-The `gen_conf.py` script automates the generation of configuration files for each phone. It creates a unique authentication code for each phone per each MAC address. The process relies on a pre-prepared `mac.csv` file, which contains a list of MAC addresses, their corresponding extension numbers, and Common Service Profile (CSP) numbers.
+The `gen_ext_conf.py` script automates the generation of configuration files for each phone. It creates a unique authentication code for each phone per each MAC address. The process relies on a pre-prepared `mac.csv` file, which contains a list of MAC addresses, their corresponding extension numbers, and Common Service Profile (CSP) numbers.
 
 ### MX-ONE Shell Commands for Authentication
 
-In addition to generating configuration files, the `gen_conf.py` script also generates a set of MX-ONE shell commands. These commands, saved in the `auth_code.sh` file, are used in the PBX CLI to set authentication codes for each extension. When using the `MD5a1` format for authentication codes, the passwords are securely hashed and are not visible in plain text. However, the clear-text passwords are saved in the `auth.txt` output file.
+In addition to generating configuration files, the `gen_ext_conf.py` script also generates a set of MX-ONE shell commands. These commands, saved in the `extensions.sh` file, are used in the PBX CLI to set authentication codes for each extension. When using the `MD5a1` format for authentication codes, the passwords are securely hashed and are not visible in plain text. However, the clear-text passwords are saved in the `auth.txt` output file.
 
 ## Input file "mac.csv" format
 MAC,EXTENTION,CSP
@@ -26,57 +26,65 @@ MAC,EXTENTION,CSP
 14:00:E9:11:11:13,103,1
 ```
 
-## gen_conf.py
+## gen_ext_conf.py
 
-The script allows you to configure the input CSV file separator and choose the desired password length.
+The script allows you to configure the input CSV file separator, choose the desired password length and SIP proxy IP address.
 
 ```python
 DELIM = "," # CSV file separator
 DIG = 14    # length of auth code
+SIP_PROXY = "192.168.1.11"
 ```
 
 Run the script:
 ```
-$ python3 gen_conf.py
+$ python3 gen_ext_conf.py
 Generated 3 config files
 ```
 
-## Output files
-- <MAC>.cfg files
-- file with passwords: "auth.txt"
-- file with commands: "auth_code.sh"
+## Output files created in a sub-directory `<date>`
+- `<MAC>.cfg` files
+- `<MAC>.tuz` encrypted files
+- file with passwords: `auth-<date-time>.txt`
+- file with commands: `extensions-<date-time>.sh`
 
-### 1400E9111111.cfg
+### `1400E9111111.cfg`
 
 ```
 sip line1 user name:101
 sip line1 auth name:101
-sip line1 password:CWKsJR25MEhGFj
+sip line1 password:n0l0VoB11QNkxU
 sip proxy ip:"192.168.1.11"
 sip registrar ip:"192.168.1.11"
 ```
 
-### auth.txt
+### `auth-<date-time>.txt`
 
 ```
-101,CWKsJR25MEhGFj
-102,RZPVIkSHpiOXoB
-103,Oi2qiGhTUKzppQ
+101,n0l0VoB11QNkxU
+102,pY9BwjbJHXVmFq
+103,Y6cN2O144k7QyX
 ```
 
-### auth_code.sh
+### `extensions-<date-time>.sh`
 
 ```sh
-auth_code -i -d 101 --csp 0 --cil 101 --customer 0 --hash-type md5a1 --auth-code CWKsJR25MEhGFj
-auth_code -i -d 102 --csp 0 --cil 102 --customer 0 --hash-type md5a1 --auth-code RZPVIkSHpiOXoB
-auth_code -i -d 103 --csp 1 --cil 103 --customer 0 --hash-type md5a1 --auth-code Oi2qiGhTUKzppQ
+extension -i -d 101 --csp 0 -l 1
+extension -i -d 102 --csp 0 -l 1
+extension -i -d 103 --csp 1 -l 1
+ip_extension -i -d 101 --protocol sip
+ip_extension -i -d 102 --protocol sip
+ip_extension -i -d 103 --protocol sip
+auth_code -i -d 101 --csp 0 --cil 101 --customer 0 --hash-type md5a1 --auth-code n0l0VoB11QNkxU
+auth_code -i -d 102 --csp 0 --cil 102 --customer 0 --hash-type md5a1 --auth-code pY9BwjbJHXVmFq
+auth_code -i -d 103 --csp 1 --cil 103 --customer 0 --hash-type md5a1 --auth-code Y6cN2O144k7QyX
 ```
 
 ## Encrypting Configuration Files
 
 For enhanced security, the generated configuration (`cfg`) files can be encrypted using the `anacrypt` utility. After encryption, the configuration files are stored as `tuz` files, which are then uploaded to the Configuration Server, replacing the original unencrypted `cfg` files.
 
-The `anacrypt` utility, available from the vendor's Download Center, allows you to securely encrypt configuration files for SIP phones. It encrypts all `cfg` files in the current directory (`./`) into `tuz` format using a specified password.
+The `anacrypt` utility, available from the vendor's Download Center, allows you to securely encrypt configuration files for SIP phones. It encrypts all `cfg` files in the current directory (`./`) into `tuz` format using a specified password (located in a file with the name `passw`).
 
 ### Steps to Encrypt and Deploy Configuration Files:
 
@@ -90,4 +98,29 @@ The `anacrypt` utility, available from the vendor's Download Center, allows you 
 anacrypt -d ./ -m -p password1234 -i
 ```
 
+Then copy all files to remote using `scp`.
+
 This process ensures secure and efficient registration and configuration of SIP phones on the MX-ONE PBX, leveraging automated scripts and encryption for added security.
+
+## Create analog extensions in a bulk
+
+Configuration:
+```
+BOARD = "1A-0-00-%s"
+START_PORT = 0
+END_PORT = 31
+START_EXT = 200
+```
+
+Run the script:
+```
+$ python3 extei.py
+```
+
+### Output extei.mdsh example
+
+```
+EXTEI:DIR=200,TYPE=EL6,EQU=1A-0-00-0,CSP=0,ICAT=8020000;
+EXTEI:DIR=201,TYPE=EL6,EQU=1A-0-00-1,CSP=0,ICAT=8020000;
+EXTEI:DIR=202,TYPE=EL6,EQU=1A-0-00-2,CSP=0,ICAT=8020000;
+```
