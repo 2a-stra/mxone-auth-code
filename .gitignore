@@ -1,3 +1,6 @@
 _*
 20*
-passw
+*.cfg
+*.tuz
+*.exe
+venv
