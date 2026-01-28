@@ -10,6 +10,7 @@ import os
 from datetime import datetime
 import streamlit as st
 import tempfile
+from PIL import Image
 
 import zipfile
 from pathlib import Path
@@ -26,6 +27,26 @@ Path("./%s" % DT).mkdir(parents=True, exist_ok=True)
 EXTENSION_FILE = "./%s/extensions-%s.sh" % (DT, DATE_TIME)
 AUTH_TXT = "./%s/auth-%s.txt" % (DT, DATE_TIME)
 
+
+col_1, col_2 = st.columns([8, 1])
+
+with col_1:
+    st.image("img/2A-stra_logo.jpg", width=120)
+
+with col_2:
+    with st.popover("❓"):
+        st.markdown("""
+        ### About
+        This app:
+        - Reads data from csv file with following format:
+            MAC,EXTENTION,CSP,Name1,Name2
+        - Generate shell script for MX-ONE extensions creation
+        - Generates config files for SIP-phones
+        - Encrypts them for deployment
+        
+        
+        **Source:** https://github.com/2a-stra/mxone-auth-code
+        """)
 
 st.set_page_config(page_title="Config Generator", layout="wide")
 st.title("Config Generator")
