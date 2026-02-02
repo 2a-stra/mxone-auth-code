@@ -28,7 +28,7 @@ import random
 from datetime import datetime
 from subprocess import run
 
-TEST = False
+TEST = True
 
 DELIM = ","    # CSV file separator
 DIGITS = 14    # length of auth code
@@ -120,11 +120,18 @@ def gen_ip_ext(ext: str, ext_cmd):
 def gen_name(ext: str, name1: str, name2: str, ext_cmd):
 
     start = int(ext)
+    parts = [f"name -i -d {start}"]
+
+    if name1.strip():
+        parts.append(f'--name1 "{name1}"')
+
+    if name2.strip():
+        parts.append(f'--name2 "{name2}"')
+
+    parts.append("--number-type dir")
+    nline = " ".join(parts) + "\n"
 
     with open(ext_cmd, "a") as ac:  # append file
-
-        nline = 'name -i -d {start} --name1 "{name1}" --name2 "{name2}" --number-type dir\n'.format(start=start, name1=name1, name2=name2)
-
         ac.write(nline)
 
 
