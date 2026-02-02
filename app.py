@@ -9,6 +9,7 @@ https://github.com/2a-stra/mxone-auth-code
 import os
 from datetime import datetime
 import streamlit as st
+import csv
 import tempfile
 from PIL import Image
 
@@ -42,7 +43,7 @@ with col_2:
             MAC,EXTENTION,CSP,Name1,Name2
         - Generate shell script for MX-ONE extensions creation
         - Generates config files for SIP-phones
-        - Encrypts them for deployment
+        - Encrypts config files for deployment
         
         
         **Source:** https://github.com/2a-stra/mxone-auth-code
@@ -54,6 +55,30 @@ st.title("Config Generator")
 uploaded = st.file_uploader("Upload CSV file", type=["csv", "txt"])
 
 if uploaded:
+
+    # --- Read uploaded file for preview ---
+    uploaded.seek(0)
+    decoded = uploaded.read().decode("utf-8").splitlines()
+    reader = csv.reader(decoded)
+
+    preview_rows = list(reader)
+
+    st.subheader("Uploaded File Preview (Raw)")
+
+    if preview_rows:
+        # Add line numbers (1-based)
+        preview_with_lines = [
+            [idx + 1] + row
+            for idx, row in enumerate(preview_rows)
+        ]
+
+        st.dataframe(
+            preview_with_lines,
+            width="stretch"
+        )
+    else:
+        st.info("File is empty.")
+
     # Save uploaded file
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(uploaded.getbuffer())

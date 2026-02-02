@@ -4,11 +4,11 @@
 14:00:E9:33:33:33,4333,5,First only,
 14:00:E9:44:44:44,4444,5,First name verylonglonglong, Second veryverylongnamename
 14:00:E9:55:55:55,5555,5,,Only second
-14:00:E9:66:66:66,5556,2,, # both names empty
+14:00:E9:66:66:66,6666,2,, # both names empty
 # Wrong rows
 14:00:E9:66:66:67,6667,0,,Wrong,line # 6 fields
 14:00:E9:66:66:68,6668,0   # only 3 fields
 14:00:E9:66:66:77,6677,,,  # no csp
 # MAC
-0C:38:3E:77:77:77,1000,0,Fanvil,
+0C:38:3E:77:77:77,7777,0,Fanvil,
 11:11:11:11:11:11,1111,0,Wrong,MAC
