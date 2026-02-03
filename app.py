@@ -50,7 +50,7 @@ with col_2:
         """)
 
 st.set_page_config(page_title="Config Generator", layout="wide")
-st.title("Config Generator")
+st.title("MX-ONE Extensions Config Generator")
 
 uploaded = st.file_uploader("Upload CSV file", type=["csv", "txt"])
 

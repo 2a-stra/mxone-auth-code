@@ -1,4 +1,4 @@
-#MAC,EXT,CSP,First name, Second name  # - Exactly 5 fields
+﻿#MAC,EXT,CSP,First name, Second name  # - Exactly 5 fields
 14:00:E9:11:11:11,4111,0,First Name,Second name
 14:00:E9:22:22:22,4222,1,F.,SEC
 14:00:E9:33:33:33,4333,5,First only,

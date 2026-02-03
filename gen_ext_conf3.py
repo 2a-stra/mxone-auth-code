@@ -101,7 +101,7 @@ def gen_ext(ext: str, csp: str, mac:str, ext_cmd):
 
     start = int(ext)
 
-    with open(ext_cmd, "a") as ac:  # append file
+    with open(ext_cmd, "a", newline="\n", encoding="utf-8") as ac:  # append file
         #TODO: LIM number
         if mac[:6] == MAC_MITEL:
             ac.write("extension -i -d {start} --csp {csp} -l 1\n".format(start=start, csp=csp))
@@ -113,7 +113,7 @@ def gen_ip_ext(ext: str, ext_cmd):
 
     start = int(ext)
 
-    with open(ext_cmd, "a") as ac:  # append file
+    with open(ext_cmd, "a", newline="\n", encoding="utf-8") as ac:  # append file
         ac.write("ip_extension -i -d {start} --protocol sip\n".format(start=start))
 
 
@@ -131,7 +131,7 @@ def gen_name(ext: str, name1: str, name2: str, ext_cmd):
     parts.append("--number-type dir")
     nline = " ".join(parts) + "\n"
 
-    with open(ext_cmd, "a") as ac:  # append file
+    with open(ext_cmd, "a", newline="\n", encoding="utf-8") as ac:  # append file
         ac.write(nline)
 
 
@@ -141,7 +141,7 @@ def gen_auth(ext: str, code: str, csp: str, ext_cmd, auth_txt):
 
     with open(auth_txt, "a") as f:  # append file
 
-        with open(ext_cmd, "a") as ac:  # append file
+        with open(ext_cmd, "a", newline="\n", encoding="utf-8") as ac:  # append file
 
             # md5a1 hash
             ac.write("auth_code -i -d {start} --csp {csp} --cil {start} --customer 0 --hash-type md5a1 --auth-code {code}\n".format(start=start, code=code, csp=csp))
@@ -158,7 +158,7 @@ def read_rows(file_name):
     warnings = []
     errors = []
 
-    with open(file_name, "r") as fl:
+    with open(file_name, "r", encoding="utf-8-sig") as fl:
         for lineno, line in enumerate(fl, start=1):
             line = line.strip()
 
