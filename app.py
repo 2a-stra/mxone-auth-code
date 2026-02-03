@@ -18,7 +18,7 @@ from pathlib import Path
 from io import BytesIO
 from zoneinfo import ZoneInfo
 
-from gen_ext_conf3 import read_rows, process_rows, encrypt_config, encr_files
+from gen_ext_conf import read_rows, process_rows, encrypt_config, encr_files
 
 now = datetime.now(ZoneInfo("Asia/Yerevan"))  # current date and time
 DT = now.strftime("%Y%m%d")
@@ -42,7 +42,7 @@ with col_2:
         - Reads data from csv file with following format:
             MAC,EXTENTION,CSP,Name1,Name2
         - Generate shell script for MX-ONE extensions creation
-        - Generates config files for SIP-phones
+        - Generates config files for SIP-phones (Mitel 6800/6900, Fanvil X303)
         - Encrypts config files for deployment
         
         
