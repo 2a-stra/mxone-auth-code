@@ -2,14 +2,62 @@
 
 ## SIP Phone Registration and Configuration with MX-ONE PBX
 
-When SIP phones register with the MX-ONE PBX, you can link each phone's unique MAC address to a specific extension number. The phone then attempts to download its configuration file from the IP Phone Configuration Server (e.g., HTTP or HTTPS server). This configuration file contains the following:
+When SIP phones register with the MX-ONE PBX, you can link each phone's unique MAC address to a specific extension number. The phone then attempts to download its configuration file from the IP Phone Configuration Server (e.g., HTTP or HTTPS server). This application automatically generate configurations for MX-ONE and phones contains the following:
 
-- The assigned extension number for the phone
+- Extension numbers for the phones
+- Common Service Profile numbers
 - Extension's first and second names
-- Authentication code
+- Authentication codes
 - SIP server IP addresses
 
-### Configuration File Generation with `gen_ext_conf.py`
+You can use the python script `gen_ext_conf.py` in a command line interface or run a Web interface.
+
+### Running the Web Interface
+
+This project provides a web-based interface built with the Streamlit Python framework.
+
+Start the application by running:
+
+```sh
+streamlit run app.py
+```
+
+Once started, open your web browser and navigate to: `http://localhost:8501/`
+
+#### Usage Guide
+
+##### Step 1: Upload a CSV File
+
+Use the `Browse files` button to select and upload a CSV file.
+
+<img src="img/0_upload_csv_file.png" width="1031" height="538">
+
+##### Step 2: Preview Uploaded CSV (`test_mac.csv`)
+
+After uploading, the application displays a preview of the CSV file contents for verification.
+
+<img src="img/1_uploaded_csv_file_preview.png" width="982" height="748">
+
+##### Step 3: Review Imported Rows
+
+Check the imported rows to ensure the data has been parsed correctly.
+
+<img src="img/2_check_impoted_rows.png" width="970" height="912">
+
+##### Step 4: Generate Configuration Files
+
+Process the imported rows and download the generated configuration files as a single ZIP archive.
+
+<img src="img/3_process_imported_lines.png" width="984" height="757">
+
+##### Step 5: Encrypt and Download Files
+
+Encrypt the generated configuration files and download the encrypted output as a ZIP archive.
+
+<img src="img/4_download_encrypt_files.png" width="951" height="651">
+
+
+### Configuration Files Generation with `gen_ext_conf.py`
 
 The `gen_ext_conf.py` script automates the generation of configuration files for each phone. It creates a unique authentication code for each phone per each MAC address. The process relies on a pre-prepared file with default name `test_mac.csv`, which contains a list of MAC addresses, their corresponding extension numbers, Common Service Profile (CSP) numbers and names.
 
@@ -202,7 +250,7 @@ START_EXT = 200
 
 Run the script:
 ```
-$ python extei.py
+python extei.py
 ```
 
 ## Output extei.mdsh example
@@ -214,7 +262,7 @@ EXTEI:DIR=202,TYPE=EL6,EQU=1A-0-00-2,CSP=0,ICAT=8020000;
 ```
 
 
-# Generate SIP and analog phones configuration files for MX-ONE (v1)
+# Generate SIP phones configuration files for MX-ONE (v1)
 
 ## Input file "mac.csv" format
 MAC,EXTENTION,CSP
