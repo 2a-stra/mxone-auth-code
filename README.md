@@ -10,9 +10,9 @@ When SIP phones register with the MX-ONE PBX, you can link each phone's unique M
 - Authentication codes
 - SIP server IP addresses
 
-You can use the python script `gen_ext_conf.py` in a command line interface or run a Web interface.
+You can use the python script `gen_ext_conf.py` in a command line interface (CLI) or run a Web UI application.
 
-### Running the Web Interface
+### Running Web UI
 
 This project provides a web-based interface built with the Streamlit Python framework.
 
@@ -37,6 +37,8 @@ Use the `Browse files` button to select and upload a CSV file.
 After uploading, the application displays a preview of the CSV file contents for verification.
 
 <img src="img/1_uploaded_csv_file_preview.png" width="982" height="748">
+
+It automatically detects "," or ";" CSV file delimiter.
 
 ##### Step 3: Review Imported Rows
 

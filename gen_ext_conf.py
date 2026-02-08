@@ -152,7 +152,7 @@ def gen_auth(ext: str, code: str, csp: str, ext_cmd, auth_txt):
             f.write("%s,%s\n" % (start,code))
 
 
-def read_rows(file_name):
+def read_rows(file_name, delim):
 
     rows = []
     warnings = []
@@ -170,7 +170,7 @@ def read_rows(file_name):
             if "#" in line:
                 line = line.split("#", 1)[0].rstrip()
 
-            parts = line.split(DELIM)
+            parts = line.split(delim)
             if len(parts) != 5:
                 errors.append(
                     f"Line {lineno}: Expected 5 fields, got {len(parts)} -> {line}"
@@ -375,7 +375,7 @@ if __name__ == "__main__":
     EXTENSION_FILE = "./%s/extensions-%s.sh" % (DT, DATE_TIME)
     AUTH_TXT = "./%s/auth-%s.txt" % (DT, DATE_TIME)
 
-    rows, warnings, errors = read_rows(MAC_FNAME)
+    rows, warnings, errors = read_rows(MAC_FNAME, DELIM)
     generated, gen_errors = process_rows(rows, DT, EXTENSION_FILE, AUTH_TXT)
 
     # -------- Summary --------
