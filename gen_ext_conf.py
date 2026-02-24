@@ -237,6 +237,9 @@ def process_rows(rows, DT, ext_sh, auth_txt):
     errors = []
 
     # -------- Phase 1 --------
+    with open(ext_sh, "a", newline="\n", encoding="utf-8") as ac:
+        ac.write("printf '\\nMX-ONE Extensions Config Generator\\n (https://github.com/2a-stra/mxone-auth-code)\\n'\n")
+        ac.write("printf '\\nCreating extensions...\\n'\n")
     for r in rows:
         try:
             gen_ext(r["ext"], r["csp"], r["mac"], ext_sh)
@@ -246,6 +249,8 @@ def process_rows(rows, DT, ext_sh, auth_txt):
             )
 
     # -------- Phase 2 --------
+    with open(ext_sh, "a", newline="\n", encoding="utf-8") as ac:
+        ac.write("printf '\\nCreating ip-extensions...\\n'\n")
     for r in rows:
         try:
             gen_ip_ext(r["ext"], ext_sh)
@@ -255,6 +260,8 @@ def process_rows(rows, DT, ext_sh, auth_txt):
             )
 
     # -------- Phase 3 --------
+    with open(ext_sh, "a", newline="\n", encoding="utf-8") as ac:
+        ac.write("printf '\\nCreating names...\\n'\n")
     for r in rows:
         # Skip gen_name if both names are empty
         if not r["name1"] and not r["name2"]:
@@ -268,6 +275,8 @@ def process_rows(rows, DT, ext_sh, auth_txt):
             )
 
     # -------- Phase 4 --------
+    with open(ext_sh, "a", newline="\n", encoding="utf-8") as ac:
+        ac.write("printf '\\nCreating auth codes...\\n'\n")
     for r in rows:
         try:
             code = gen_pass(DIGITS)
@@ -287,6 +296,8 @@ def process_rows(rows, DT, ext_sh, auth_txt):
             errors.append(
                 f"Line {r['lineno']}: config/auth generation failed ({e})"
             )
+    with open(ext_sh, "a", newline="\n", encoding="utf-8") as ac:
+        ac.write("printf '\\nDone.\\nYou may remove this shell file.\\n'\n")
 
     generated.append(ext_sh)
     generated.append(auth_txt)
