@@ -16,7 +16,13 @@ You can use the python script `gen_ext_conf.py` in a command line interface (CLI
 
 This project provides a web-based interface built with the Streamlit Python framework.
 
-Start the application by running:
+Install dependencies:
+
+```sh
+pip install -r requirements.txt
+```
+
+Start the application by running `run.bat` or:
 
 ```sh
 streamlit run app.py
