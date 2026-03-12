@@ -29,20 +29,23 @@ EXTENSION_FILE = "./%s/extensions-%s.sh" % (DT, DATE_TIME)
 AUTH_TXT = "./%s/auth-%s.txt" % (DT, DATE_TIME)
 
 
-def csv_delim(file_name):
-    with open(file_name, encoding='utf-8-sig') as f:
-        sample = f.read(4096)
+def csv_delim(file_obj):
 
-        try:
-            # Only allow comma or semicolon
-            dialect = csv.Sniffer().sniff(sample, delimiters=[',', ';'])
-            return dialect.delimiter
-        except csv.Error:
-            # Fallback: count only comma and semicolon
-            comma_count = sample.count(',')
-            semicolon_count = sample.count(';')
+    sample_lines = "".join([file_obj.readline().decode("utf-8-sig") for _ in range(3)])
 
-            return ',' if comma_count >= semicolon_count else ';'
+    # Rewind again so the rest of the app can read from the start
+    file_obj.seek(0)
+
+    try:
+        # Only allow comma or semicolon
+        dialect = csv.Sniffer().sniff(sample_lines, delimiters=[',', ';'])
+        return dialect.delimiter
+    except csv.Error:
+        # Fallback: count only comma and semicolon
+        comma_count = sample_lines.count(',')
+        semicolon_count = sample_lines.count(';')
+
+        return ',' if comma_count >= semicolon_count else ';'
 
 
 col_1, col_2 = st.columns([8, 1])
@@ -74,8 +77,9 @@ if uploaded:
 
     # --- Read uploaded file for preview ---
     uploaded.seek(0)
-    decoded = uploaded.read().decode("utf-8").splitlines()
-    detected_delimiter = csv_delim(uploaded.name)
+    decoded = uploaded.read().decode("utf-8-sig").splitlines()
+    uploaded.seek(0)
+    detected_delimiter = csv_delim(uploaded)
     reader = csv.reader(decoded, delimiter=detected_delimiter)
 
     preview_rows = list(reader)
