@@ -59,7 +59,7 @@ with col_2:
         ### About
         This app:
         - Reads data from csv file with following format:
-            MAC,EXTENTION,CSP,Name1,Name2
+            MAC,EXTENTION,CSP,LIM,Name1,Name2
         - Generate shell script for MX-ONE extensions creation
         - Generates config files for SIP-phones (Mitel 6800/6900, Fanvil X303)
         - Encrypts config files for deployment

@@ -2,15 +2,18 @@
 
 ## SIP Phone Registration and Configuration with MX-ONE PBX
 
-When SIP phones register with the MX-ONE PBX, you can link each phone's unique MAC address to a specific extension number. The phone then attempts to download its configuration file from the IP Phone Configuration Server (e.g., HTTP or HTTPS server). This application automatically generate configurations for MX-ONE and phones contains the following:
+When SIP phones registering to a MX-ONE PBX, you can link each phone's unique MAC address to a specific extension number. The phone then attempts to download its configuration file from an IP Phone Configuration Server (e.g., HTTP or HTTPS server).
 
-- Extension numbers for the phones
-- Common Service Profile numbers
+This application automatically generate configurations for both MX-ONE and the phones contains the following:
+
+- Extension number for the phone
+- Common Service Profile number
+- LIM number
 - Extension's first and second names
-- Authentication codes
-- SIP server IP addresses
+- Authentication code
+- SIP server IP address
 
-You can use the python script `gen_ext_conf.py` in a command line interface (CLI) or run a Web UI application.
+You can use the python script `gen_ext_conf.py` in a command line interface (CLI) or run a Web UI application. The Web UI was made with using AI (LLM) code generation under my control.
 
 ### Running Web UI
 
@@ -36,21 +39,23 @@ Once started, open your web browser and navigate to: `http://localhost:8501/`
 
 Use the `Browse files` button to select and upload a CSV file.
 
-<img src="img/0_upload_csv_file.png" width="1031" height="538">
+<img src="img/0_upload_csv_file.png" width="1162" height="576">
+
+The script automatically detects "," or ";" CSV file delimiter.
 
 ##### Step 2: Preview Uploaded CSV (`test_mac.csv`)
 
 After uploading, the application displays a preview of the CSV file contents for verification.
 
-<img src="img/1_uploaded_csv_file_preview.png" width="982" height="748">
-
-It automatically detects "," or ";" CSV file delimiter.
+<img src="img/1_uploaded_csv_file_preview.png" width="1067" height="786">
 
 ##### Step 3: Review Imported Rows
 
 Check the imported rows to ensure the data has been parsed correctly.
 
-<img src="img/2_check_impoted_rows.png" width="970" height="912">
+<img src="img/2_check_impoted_rows.png" width="1077" height="816">
+
+The lines with detected errors will be ignored. If the imported result is acceptable, you can process the file, otherwise edit and upload new CSV file again.
 
 ##### Step 4: Generate Configuration Files
 
@@ -67,7 +72,7 @@ Encrypt the generated configuration files and download the encrypted output as a
 
 ### Configuration Files Generation with `gen_ext_conf.py`
 
-The `gen_ext_conf.py` script automates the generation of configuration files for each phone. It creates a unique authentication code for each phone per each MAC address. The process relies on a pre-prepared file with default name `test_mac.csv`, which contains a list of MAC addresses, their corresponding extension numbers, Common Service Profile (CSP) numbers and names.
+The `gen_ext_conf.py` script automates the generation of configuration files for each phone. It creates a unique authentication code for each phone per each MAC address. The process relies on a pre-prepared file with default name `test_mac.csv`, which contains a list of MAC addresses, their corresponding extension numbers, Common Service Profile (CSP) numbers, LIM numbers and names.
 
 Depending from MAC address vendor, the script generates different MAC configs for Mitel and Fanvil SIP-phones.
 
@@ -76,41 +81,49 @@ Depending from MAC address vendor, the script generates different MAC configs fo
 In addition to generating configuration files, the `gen_ext_conf.py` script also generates a set of MX-ONE shell commands. These commands, saved in the `extensions.sh` file, are used in the PBX CLI to set authentication codes for each extension. When using the `MD5a1` format for authentication codes, the passwords are securely hashed and are not visible in plain text. However, the clear-text passwords are saved in the `auth.txt` output file.
 
 ## Input file `test_mac.csv` format
-MAC,EXTENTION,CSP,Name1,Name2
+MAC,EXTENTION,CSP,LIM,Name1,Name2
 
 ### Example of `test_mac.csv` input file
 ```
-#MAC,EXT,CSP,First name, Second name  # - Exactly 5 fields
-14:00:E9:11:11:11,1111,0,First Name,Second name
-14:00:E9:22:22:22,2222,1,F.,SEC
-14:00:E9:33:33:33,3333,5,First only,
-14:00:E9:44:44:44,4444,5,First name verylonglonglong, Second veryverylongnamename
-14:00:E9:55:55:55,5555,5,,Only second
-14:00:E9:66:66:66,6666,2,,  # both names empty
+#MAC,EXT,CSP,LIM,First name, Second name  # - Exactly 6 fields
+14:00:E9:11:11:11,1111,0,1,First Name,Second name
+14:00:E9:22:22:22,2222,2,1,F.,SEC
+14:00:E9:33:33:33,3333,3,1,First only,
+14:00:E9:44:44:44,4444,4,2,First name verylonglonglong, Second veryverylongnamename
+14:00:E9:55:55:55,5555,5,2,,Only second
+14:00:E9:66:66:66,6666,6,2,,            # both names empty
 # Wrong rows
-14:00:E9:66:66:67,6667,0,,Wrong,line # 6 fields
-14:00:E9:66:66:68,6668,0    # only 3 fields
-14:00:E9:66:66:77,6677,,,   # no csp
+14:00:E9:66:66:67,6667,0,1,,Wrong,line  # 7 fields
+14:00:E9:66:66:68,6668,01,              # only 4 fields
+14:00:E9:66:66:77,6677,,1,,             # no csp
 # MAC
-0C:38:3E:77:77:77,7777,0,Fanvil,
-11:11:11:11:11:11,1111,0,Wrong,MAC
+0C:38:3E:77:77:77,7777,1,2,Fanvil,
+11:11:11:11:11:11,1100,1,1,Wrong,MAC
 ```
 
 _Note_: The `Name1` and `Name2` fields are limited to 20 characters in MX-ONE and will be truncated by the script to avoid command execution errors.
 
-## gen_ext_conf.py
+## config.py
 
 The script allows you to configure the input CSV file separator, choose the desired password length and SIP proxy IP address.
 
 ```python
-TEST = True
-
+COLS = 6
 DELIM = ","    # CSV file separator
 DIGITS = 14    # length of auth code
-SIP_PROXY = "192.168.1.11"
+
+MAC_MITEL = "1400E9"
+MAC_FANVIL = "0C383E"
+
+SIP_PROXY = {  # LIM number and IP
+    "1": "192.168.1.11",
+    "2": "192.168.2.11",
+    "3": "192.168.3.11",
+    "4": "192.168.4.11"
+}
 ```
 
-If the constant `TEST` is set to `True`, the output will be generated in the `_test` folder, otherwise will be created a folder with a date as a name in `YYYYMMDD` format.
+If the constant `TEST` is set to `True` in the `gen_ext_conf.py` script, the output will be generated in the `_test` folder, otherwise will be created a folder with a date as a name in `YYYYMMDD` format.
 
 Run the script `gen_ext_conf.py <mac.csv>`:
 ```
@@ -126,9 +139,9 @@ Warnings (3):
   - Line 7: Both name1 and name2 are empty
 
 Completed with 4 errors:
-  - Line 9: Expected 5 fields, got 6 -> 14:00:E9:66:66:67,6667,0,,Wrong,line
-  - Line 10: Expected 5 fields, got 3 -> 14:00:E9:66:66:68,6668,0
-  - Line 11: Missing required field (mac/ext/csp) -> 14:00:E9:66:66:77,6677,,,
+  - Line 9: Expected 6 fields, got 7 → 14:00:E9:66:66:67,6667,0,1,,Wrong,line
+  - Line 10: Expected 6 fields, got 4 → 14:00:E9:66:66:68,6668,01,
+  - Line 11: Missing required field (mac/ext/csp/lim) → 14:00:E9:66:66:77,6677,,1,,
   - Line 14: Unknown MAC (111111)
 
 Test exit!
@@ -146,7 +159,7 @@ Test exit!
 ```
 sip line1 user name:1111
 sip line1 auth name:1111
-sip line1 password:9T8diiFgouUhZm
+sip line1 password:YqTqroSz9cTDiN
 sip proxy ip:192.168.1.11
 sip registrar ip:192.168.1.11
 ```
@@ -160,35 +173,37 @@ Version = 2.0000000000
 sip.line.1.PhoneNumber = 7777
 sip.line.1.DisplayName = 7777
 sip.line.1.RegUser = 7777
-sip.line.1.SipName = 192.168.1.11
-sip.line.1.RegAddr = 192.168.1.11
-sip.line.1.RegPswd = UXNj2tVhaDhvUh
+sip.line.1.SipName = 192.168.2.11
+sip.line.1.RegAddr = 192.168.2.11
+sip.line.1.RegPswd = qkR4DqAQDngLvi
 sip.line.1.RegEnabled = 1
-sip.line.1.ProxyAddr = 192.168.1.11
+sip.line.1.ProxyAddr = 192.168.2.11
 ```
 
 ### `auth-<date-time>.txt` output example
 
 ```
-1111,9T8diiFgouUhZm
-2222,YLgLS5qOLfu6u0
-3333,GJHIDE4ZQPy7WJ
-4444,wIXM3jvudgAV5H
-5555,bfMjFG5pTxMvrJ
-6666,yEeQd1TUk2qqYR
-7777,UXNj2tVhaDhvUh
+1111,YqTqroSz9cTDiN
+2222,WRwDS7j0o15jIg
+3333,dZ600yjIDZgMPo
+4444,eKcaxI5j9gpQAf
+5555,D6XTkCx8ZkGyBF
+6666,r9Mn7TeUNNLWuE
+7777,qkR4DqAQDngLvi
 ```
 
 ### `extensions-<date-time>.sh` output example
 
 ```sh
+printf '\nCreating extensions...\n'
 extension -i -d 1111 --csp 0 -l 1
-extension -i -d 2222 --csp 1 -l 1
-extension -i -d 3333 --csp 5 -l 1
-extension -i -d 4444 --csp 5 -l 1
-extension -i -d 5555 --csp 5 -l 1
-extension -i -d 6666 --csp 2 -l 1
-extension -i -d 7777 --csp 0 -l 1 --third-party-client yes
+extension -i -d 2222 --csp 2 -l 1
+extension -i -d 3333 --csp 3 -l 1
+extension -i -d 4444 --csp 4 -l 2
+extension -i -d 5555 --csp 5 -l 2
+extension -i -d 6666 --csp 6 -l 2
+extension -i -d 7777 --csp 1 -l 2 --third-party-client yes
+printf '\nCreating ip-extensions...\n'
 ip_extension -i -d 1111 --protocol sip
 ip_extension -i -d 2222 --protocol sip
 ip_extension -i -d 3333 --protocol sip
@@ -196,24 +211,26 @@ ip_extension -i -d 4444 --protocol sip
 ip_extension -i -d 5555 --protocol sip
 ip_extension -i -d 6666 --protocol sip
 ip_extension -i -d 7777 --protocol sip
+printf '\nCreating names...\n'
 name -i -d 1111 --name1 "First Name" --name2 "Second name" --number-type dir
 name -i -d 2222 --name1 "F." --name2 "SEC" --number-type dir
 name -i -d 3333 --name1 "First only" --number-type dir
 name -i -d 4444 --name1 "First name verylongl" --name2 "Second veryverylongn" --number-type dir
 name -i -d 5555 --name2 "Only second" --number-type dir
 name -i -d 7777 --name1 "Fanvil" --number-type dir
-auth_code -i -d 1111 --csp 0 --cil 1111 --customer 0 --hash-type md5a1 --auth-code 9T8diiFgouUhZm
-auth_code -i -d 2222 --csp 1 --cil 2222 --customer 0 --hash-type md5a1 --auth-code YLgLS5qOLfu6u0
-auth_code -i -d 3333 --csp 5 --cil 3333 --customer 0 --hash-type md5a1 --auth-code GJHIDE4ZQPy7WJ
-auth_code -i -d 4444 --csp 5 --cil 4444 --customer 0 --hash-type md5a1 --auth-code wIXM3jvudgAV5H
-auth_code -i -d 5555 --csp 5 --cil 5555 --customer 0 --hash-type md5a1 --auth-code bfMjFG5pTxMvrJ
-auth_code -i -d 6666 --csp 2 --cil 6666 --customer 0 --hash-type md5a1 --auth-code yEeQd1TUk2qqYR
-auth_code -i -d 7777 --csp 0 --cil 7777 --customer 0 --hash-type md5a1 --auth-code UXNj2tVhaDhvUh
+printf '\nCreating auth codes...\n'
+auth_code -i -d 1111 --csp 0 --cil 1111 --customer 0 --hash-type md5a1 --auth-code YqTqroSz9cTDiN
+auth_code -i -d 2222 --csp 2 --cil 2222 --customer 0 --hash-type md5a1 --auth-code WRwDS7j0o15jIg
+auth_code -i -d 3333 --csp 3 --cil 3333 --customer 0 --hash-type md5a1 --auth-code dZ600yjIDZgMPo
+auth_code -i -d 4444 --csp 4 --cil 4444 --customer 0 --hash-type md5a1 --auth-code eKcaxI5j9gpQAf
+auth_code -i -d 5555 --csp 5 --cil 5555 --customer 0 --hash-type md5a1 --auth-code D6XTkCx8ZkGyBF
+auth_code -i -d 6666 --csp 6 --cil 6666 --customer 0 --hash-type md5a1 --auth-code r9Mn7TeUNNLWuE
+auth_code -i -d 7777 --csp 1 --cil 7777 --customer 0 --hash-type md5a1 --auth-code qkR4DqAQDngLvi
 ```
 
 The option "--third-party-client yes" will be added for non-Mitel MAC-addresses.
 
-_Note_: The `extensions.sh` file should be prepared with Linux lines end format (LF). You can convert the shell script from Windows (CR LR) format using Linux utility `dos2unix` in MX-ONE CLI before execution.
+_Note_: The `extensions.sh` file should be prepared with Linux lines end format (LF). You can convert the shell script from Windows (CR LR) format using Linux utility `dos2unix` in MX-ONE CLI before execution. (The script automatically generate the shell file with Linux LF end).
 
 ```sh
 mx-one$ sh ./extensions.sh

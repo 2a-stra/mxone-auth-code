@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 '''
-Input file "test_mac.csv" with exactly 5 fields:
-MAC,EXTENTION,CSP,Name1,Name2
+Input file "test_mac.csv" with exactly 6 fields:
+MAC,EXTENTION,CSP,LIM,Name1,Name2
 
 Example "test_mac.csv":
-14:00:E9:11:11:11,101,0,John,L
+14:00:E9:11:11:11,101,0,1,John,L
 
 Inputs:
-- "test_mac.csv" file UTF-8 w/o BOM
+- "test_mac.csv" file UTF-8
 - "key_mitel" file with password for Mitel (string)
 - "key_fanvil" file with password for Fanvil (64 hex chars)
 
@@ -27,16 +27,9 @@ from pathlib import Path
 import random
 from datetime import datetime
 from subprocess import run
+import config as CFG
 
 TEST = True
-
-DELIM = ","    # CSV file separator
-DIGITS = 14    # length of auth code
-SIP_PROXY = "192.168.1.11"
-
-MAC_MITEL = "1400E9"
-MAC_FANVIL = "0C383E"
-
 
 def gen_pass(DIGITS: int) -> str:
 
@@ -53,14 +46,14 @@ def gen_pass(DIGITS: int) -> str:
     return a
 
 
-def gen_conf_mitel(mac: str, ext: str, code:str, DT:str, generated:list):
+def gen_conf_mitel(mac: str, ext: str, sip: str, code:str, DT:str, generated:list):
 
     out = '''sip line1 user name:{ext}
 sip line1 auth name:{ext}
 sip line1 password:{code}
 sip proxy ip:{sip}
 sip registrar ip:{sip}
-'''.format(ext=ext, code=code, sip=SIP_PROXY)
+'''.format(ext=ext, code=code, sip=sip)
 
     fn = "./%s/%s.cfg" % (DT, mac)
 
@@ -72,7 +65,7 @@ sip registrar ip:{sip}
     return generated
 
 
-def gen_conf_fanvil(mac: str, ext: str, code:str, DT:str, generated:list):
+def gen_conf_fanvil(mac: str, ext: str, sip: str, code:str, DT:str, generated:list):
 
     out = '''#<Voip Config File>#
 Version = 2.0000000000
@@ -85,7 +78,7 @@ sip.line.1.RegAddr = {sip}
 sip.line.1.RegPswd = {code}
 sip.line.1.RegEnabled = 1
 sip.line.1.ProxyAddr = {sip}
-'''.format(ext=ext, code=code, sip=SIP_PROXY)
+'''.format(ext=ext, code=code, sip=sip)
 
     fn = "./%s/%s.txt" % (DT, mac.lower())
 
@@ -97,16 +90,16 @@ sip.line.1.ProxyAddr = {sip}
     return generated
 
 
-def gen_ext(ext: str, csp: str, mac:str, ext_cmd):
+def gen_ext(ext: str, csp: str, lim: str, mac:str, ext_cmd):
 
     start = int(ext)
 
     with open(ext_cmd, "a", newline="\n", encoding="utf-8") as ac:  # append file
-        #TODO: LIM number
-        if mac[:6] == MAC_MITEL:
-            ac.write("extension -i -d {start} --csp {csp} -l 1\n".format(start=start, csp=csp))
+
+        if mac[:6] == CFG.MAC_MITEL:
+            ac.write("extension -i -d {start} --csp {csp} -l {lim}\n".format(start=start, csp=csp, lim=lim))
         else:  # Third party client
-            ac.write("extension -i -d {start} --csp {csp} -l 1 --third-party-client yes\n".format(start=start, csp=csp))
+            ac.write("extension -i -d {start} --csp {csp} -l {lim} --third-party-client yes\n".format(start=start, csp=csp, lim=lim))
 
 
 def gen_ip_ext(ext: str, ext_cmd):
@@ -171,25 +164,25 @@ def read_rows(file_name, delim):
                 line = line.split("#", 1)[0].rstrip()
 
             parts = line.split(delim)
-            if len(parts) != 5:
+            if len(parts) != CFG.COLS:
                 errors.append(
-                    f"Line {lineno}: Expected 5 fields, got {len(parts)} -> {line}"
+                    f"Line {lineno}: Expected {CFG.COLS} fields, got {len(parts)} -> {line}"
                 )
                 continue
 
-            mac, ext, csp, name1, name2 = parts
+            mac, ext, csp, lim, name1, name2 = parts
 
-            # Required fields: mac, ext, csp
+            # Required fields: mac, ext, csp, lim
             if not mac.strip() or not ext.strip() or not csp.strip():
                 errors.append(
-                    f"Line {lineno}: Missing required field (mac/ext/csp) -> {line.strip()}"
+                    f"Line {lineno}: Missing required field (mac/ext/csp/lim) -> {line.strip()}"
                 )
                 continue
 
             # Normalize and check MACs
             mac = mac.replace(":", "").strip()
 
-            if not (mac[:6] == MAC_MITEL or mac[:6] == MAC_FANVIL):
+            if not (mac[:6] == CFG.MAC_MITEL or mac[:6] == CFG.MAC_FANVIL):
                 errors.append(
                 f"Line {lineno}: Unknown MAC ({mac[:6]})"
                 )
@@ -224,6 +217,7 @@ def read_rows(file_name, delim):
                 "mac": mac.strip(),
                 "ext": ext.strip(),
                 "csp": csp.strip(),
+                "lim": lim.strip(),
                 "name1": name1.strip(),
                 "name2": name2.strip(),
             })
@@ -242,7 +236,7 @@ def process_rows(rows, DT, ext_sh, auth_txt):
         ac.write("printf '\\nCreating extensions...\\n'\n")
     for r in rows:
         try:
-            gen_ext(r["ext"], r["csp"], r["mac"], ext_sh)
+            gen_ext(r["ext"], r["csp"], r["lim"], r["mac"], ext_sh)
         except Exception as e:
             errors.append(
                 f"Line {r['lineno']}: gen_ext failed ({e})"
@@ -279,15 +273,18 @@ def process_rows(rows, DT, ext_sh, auth_txt):
         ac.write("printf '\\nCreating auth codes...\\n'\n")
     for r in rows:
         try:
-            code = gen_pass(DIGITS)
+            code = gen_pass(CFG.DIGITS)
 
-            if r["mac"][:6] == MAC_MITEL:
-                gen_conf_mitel(r["mac"], r["ext"], code, DT, generated)
-            elif r["mac"][:6] == MAC_FANVIL:
-                gen_conf_fanvil(r["mac"], r["ext"], code, DT, generated)
+            vendor = r["mac"][:6]
+            sip = CFG.SIP_PROXY[r["lim"]]
+
+            if vendor == CFG.MAC_MITEL:
+                gen_conf_mitel(r["mac"], r["ext"], sip, code, DT, generated)
+            elif vendor == CFG.MAC_FANVIL:
+                gen_conf_fanvil(r["mac"], r["ext"], sip, code, DT, generated)
             else:
                 errors.append(
-                f"Line {r['lineno']}: Unknown MAC? ({mac})"
+                f"Line {r['lineno']}: Unknown MAC? ({vendor})"
                 )
 
             gen_auth(r["ext"], code, r["csp"], ext_sh, auth_txt)
@@ -296,8 +293,10 @@ def process_rows(rows, DT, ext_sh, auth_txt):
             errors.append(
                 f"Line {r['lineno']}: config/auth generation failed ({e})"
             )
+
     with open(ext_sh, "a", newline="\n", encoding="utf-8") as ac:
         ac.write("printf '\\nDone.\\nYou may remove this shell file.\\n'\n")
+        ac.write("printf '\\nDo not forget to run \"data_backup\" command.\\n'\n")
 
     generated.append(ext_sh)
     generated.append(auth_txt)
@@ -333,7 +332,7 @@ def encrypt_config(rows, DT):
     # Encrypt Fanvil
     try:
         for r in rows:
-            if r["mac"][:6] == MAC_FANVIL:
+            if r["mac"][:6] == CFG.MAC_FANVIL:
                 txt = r["mac"].lower() + ".txt"
                 encrypted = r["mac"].lower() + ".cfg"
 
@@ -386,7 +385,7 @@ if __name__ == "__main__":
     EXTENSION_FILE = "./%s/extensions-%s.sh" % (DT, DATE_TIME)
     AUTH_TXT = "./%s/auth-%s.txt" % (DT, DATE_TIME)
 
-    rows, warnings, errors = read_rows(MAC_FNAME, DELIM)
+    rows, warnings, errors = read_rows(MAC_FNAME, CFG.DELIM)
     generated, gen_errors = process_rows(rows, DT, EXTENSION_FILE, AUTH_TXT)
 
     # -------- Summary --------
