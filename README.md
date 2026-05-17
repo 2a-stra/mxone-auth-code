@@ -13,7 +13,7 @@ This application automatically generate configurations for both MX-ONE and the p
 - Authentication code
 - SIP server IP address
 
-You can use the python script `gen_ext_conf.py` in a command line interface (CLI) or run a Web UI application. The Web UI was made with using AI (LLM) code generation under my control.
+You can use the python script `gen_ext_conf.py` in a command line interface (CLI) or run a modern Web UI application. The Web UI developed via AI (LLM) code generation, built entirely under my direct control and architectural oversight.
 
 ### Running Web UI
 
@@ -115,12 +115,14 @@ DIGITS = 14    # length of auth code
 MAC_MITEL = "1400E9"
 MAC_FANVIL = "0C383E"
 
-SIP_PROXY = {  # LIM number and IP
+SIP_PROXY = {  # LIM: IP
     "1": "192.168.1.11",
     "2": "192.168.2.11",
     "3": "192.168.3.11",
     "4": "192.168.4.11"
 }
+
+BACKUP_1 = True  # Add LIM1 as a backup SIP proxy/registrar
 ```
 
 If the constant `TEST` is set to `True` in the `gen_ext_conf.py` script, the output will be generated in the `_test` folder, otherwise will be created a folder with a date as a name in `YYYYMMDD` format.
@@ -154,14 +156,18 @@ Test exit!
 - file with commands: `extensions-<date-time>.sh` (Unix LF)
 - `<MAC>.tuz` encrypted files (generated in a local folder)
 
-### Generated config MAC file `1400E9111111.cfg` example for Mitel 6800/6900 phones
+### Generated config MAC file `1400E9444444.cfg` example for Mitel 6800/6900 phones
 
 ```
-sip line1 user name:1111
-sip line1 auth name:1111
-sip line1 password:YqTqroSz9cTDiN
-sip proxy ip:192.168.1.11
-sip registrar ip:192.168.1.11
+sip line1 user name:4444
+sip line1 auth name:4444
+sip line1 password:vHgddJkbEfIcpn
+sip proxy ip:192.168.2.11
+sip registrar ip:192.168.2.11
+sip backup proxy ip:192.168.1.11
+sip backup registrar ip:192.168.1.11
+sip backup proxy port:5060
+sip backup registrar port:5060
 ```
 
 For Fanvil SIP-phones will be generated a different MAC config file `0c383e777777.txt`:
@@ -175,21 +181,23 @@ sip.line.1.DisplayName = 7777
 sip.line.1.RegUser = 7777
 sip.line.1.SipName = 192.168.2.11
 sip.line.1.RegAddr = 192.168.2.11
-sip.line.1.RegPswd = qkR4DqAQDngLvi
+sip.line.1.RegPswd = wz5lGPPu6LmRmQ
 sip.line.1.RegEnabled = 1
 sip.line.1.ProxyAddr = 192.168.2.11
+sip.line.1.BackupRegAddr = 192.168.1.11
+sip.line.1.BackupProxyAddr = 192.168.1.11
 ```
 
 ### `auth-<date-time>.txt` output example
 
 ```
-1111,YqTqroSz9cTDiN
-2222,WRwDS7j0o15jIg
-3333,dZ600yjIDZgMPo
-4444,eKcaxI5j9gpQAf
-5555,D6XTkCx8ZkGyBF
-6666,r9Mn7TeUNNLWuE
-7777,qkR4DqAQDngLvi
+1111,GCkXtXQyDlmTQA
+2222,ehbeYGzEjtSGf8
+3333,zwbpJ8Wzkjdk3w
+4444,vHgddJkbEfIcpn
+5555,dmlac2HE98Go3V
+6666,nzzkMtPYaItgQ5
+7777,wz5lGPPu6LmRmQ
 ```
 
 ### `extensions-<date-time>.sh` output example
@@ -219,13 +227,13 @@ name -i -d 4444 --name1 "First name verylongl" --name2 "Second veryverylongn" --
 name -i -d 5555 --name2 "Only second" --number-type dir
 name -i -d 7777 --name1 "Fanvil" --number-type dir
 printf '\nCreating auth codes...\n'
-auth_code -i -d 1111 --csp 0 --cil 1111 --customer 0 --hash-type md5a1 --auth-code YqTqroSz9cTDiN
-auth_code -i -d 2222 --csp 2 --cil 2222 --customer 0 --hash-type md5a1 --auth-code WRwDS7j0o15jIg
-auth_code -i -d 3333 --csp 3 --cil 3333 --customer 0 --hash-type md5a1 --auth-code dZ600yjIDZgMPo
-auth_code -i -d 4444 --csp 4 --cil 4444 --customer 0 --hash-type md5a1 --auth-code eKcaxI5j9gpQAf
-auth_code -i -d 5555 --csp 5 --cil 5555 --customer 0 --hash-type md5a1 --auth-code D6XTkCx8ZkGyBF
-auth_code -i -d 6666 --csp 6 --cil 6666 --customer 0 --hash-type md5a1 --auth-code r9Mn7TeUNNLWuE
-auth_code -i -d 7777 --csp 1 --cil 7777 --customer 0 --hash-type md5a1 --auth-code qkR4DqAQDngLvi
+auth_code -i -d 1111 --csp 0 --cil 1111 --customer 0 --hash-type md5a1 --auth-code GCkXtXQyDlmTQA
+auth_code -i -d 2222 --csp 2 --cil 2222 --customer 0 --hash-type md5a1 --auth-code ehbeYGzEjtSGf8
+auth_code -i -d 3333 --csp 3 --cil 3333 --customer 0 --hash-type md5a1 --auth-code zwbpJ8Wzkjdk3w
+auth_code -i -d 4444 --csp 4 --cil 4444 --customer 0 --hash-type md5a1 --auth-code vHgddJkbEfIcpn
+auth_code -i -d 5555 --csp 5 --cil 5555 --customer 0 --hash-type md5a1 --auth-code dmlac2HE98Go3V
+auth_code -i -d 6666 --csp 6 --cil 6666 --customer 0 --hash-type md5a1 --auth-code nzzkMtPYaItgQ5
+auth_code -i -d 7777 --csp 1 --cil 7777 --customer 0 --hash-type md5a1 --auth-code wz5lGPPu6LmRmQ
 ```
 
 The option "--third-party-client yes" will be added for non-Mitel MAC-addresses.
