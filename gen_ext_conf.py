@@ -30,6 +30,8 @@ from subprocess import run
 import config as CFG
 
 TEST = True
+VERSION = 2.1
+
 
 def gen_pass(DIGITS: int) -> str:
 
@@ -54,6 +56,13 @@ sip line1 password:{code}
 sip proxy ip:{sip}
 sip registrar ip:{sip}
 '''.format(ext=ext, code=code, sip=sip)
+
+    if CFG.BACKUP_1 and sip != CFG.SIP_PROXY["1"]:
+        out = out + '''sip backup proxy ip:{sip}
+sip backup registrar ip:{sip}
+sip backup proxy port:5060
+sip backup registrar port:5060
+'''.format(sip=CFG.SIP_PROXY["1"])
 
     fn = "./%s/%s.cfg" % (DT, mac)
 
@@ -80,6 +89,11 @@ sip.line.1.RegEnabled = 1
 sip.line.1.ProxyAddr = {sip}
 '''.format(ext=ext, code=code, sip=sip)
 
+    if CFG.BACKUP_1 and sip != CFG.SIP_PROXY["1"]:
+        out = out + '''sip.line.1.BackupRegAddr = {sip}
+sip.line.1.BackupProxyAddr = {sip}
+'''.format(sip=CFG.SIP_PROXY["1"])
+
     fn = "./%s/%s.txt" % (DT, mac.lower())
 
     with open(fn, "w") as fl:
@@ -96,7 +110,7 @@ def gen_ext(ext: str, csp: str, lim: str, mac:str, ext_cmd):
 
     with open(ext_cmd, "a", newline="\n", encoding="utf-8") as ac:  # append file
 
-        if mac[:6] == CFG.MAC_MITEL:
+        if mac[:6].upper() == CFG.MAC_MITEL:
             ac.write("extension -i -d {start} --csp {csp} -l {lim}\n".format(start=start, csp=csp, lim=lim))
         else:  # Third party client
             ac.write("extension -i -d {start} --csp {csp} -l {lim} --third-party-client yes\n".format(start=start, csp=csp, lim=lim))
@@ -182,7 +196,7 @@ def read_rows(file_name, delim):
             # Normalize and check MACs
             mac = mac.replace(":", "").strip()
 
-            if not (mac[:6] == CFG.MAC_MITEL or mac[:6] == CFG.MAC_FANVIL):
+            if not (mac[:6].upper() == CFG.MAC_MITEL or mac[:6].upper() == CFG.MAC_FANVIL):
                 errors.append(
                 f"Line {lineno}: Unknown MAC ({mac[:6]})"
                 )
@@ -232,7 +246,7 @@ def process_rows(rows, DT, ext_sh, auth_txt):
 
     # -------- Phase 1 --------
     with open(ext_sh, "a", newline="\n", encoding="utf-8") as ac:
-        ac.write("printf '\\nMX-ONE Extensions Config Generator\\n (https://github.com/2a-stra/mxone-auth-code)\\n'\n")
+        ac.write("printf '\\nMX-ONE Extensions Config Generator v%s\\n (https://github.com/2a-stra/mxone-auth-code)\\n'\n" % VERSION)
         ac.write("printf '\\nCreating extensions...\\n'\n")
     for r in rows:
         try:
@@ -278,9 +292,9 @@ def process_rows(rows, DT, ext_sh, auth_txt):
             vendor = r["mac"][:6]
             sip = CFG.SIP_PROXY[r["lim"]]
 
-            if vendor == CFG.MAC_MITEL:
+            if vendor.upper() == CFG.MAC_MITEL:
                 gen_conf_mitel(r["mac"], r["ext"], sip, code, DT, generated)
-            elif vendor == CFG.MAC_FANVIL:
+            elif vendor.upper() == CFG.MAC_FANVIL:
                 gen_conf_fanvil(r["mac"], r["ext"], sip, code, DT, generated)
             else:
                 errors.append(
@@ -370,6 +384,7 @@ if __name__ == "__main__":
     try:
         MAC_FNAME = sys.argv[1]
     except:
+        print("MX-ONE Extensions Config Generator v%s\n (https://github.com/2a-stra/mxone-auth-code)\n" % VERSION)
         print("Using default 'test_mac.csv' file for input")
         MAC_FNAME = "test_mac.csv"
 

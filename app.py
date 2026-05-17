@@ -11,14 +11,13 @@ from datetime import datetime
 import streamlit as st
 import csv
 import tempfile
-from PIL import Image
 
 import zipfile
 from pathlib import Path
 from io import BytesIO
 from zoneinfo import ZoneInfo
 
-from gen_ext_conf import read_rows, process_rows, encrypt_config, encr_files
+import gen_ext_conf as gen
 
 now = datetime.now(ZoneInfo("Asia/Yerevan"))  # current date and time
 DT = now.strftime("%Y%m%d")
@@ -27,7 +26,6 @@ DATE_TIME = now.strftime("%Y%m%d-%H%M%S")
 Path("./%s" % DT).mkdir(parents=True, exist_ok=True)
 EXTENSION_FILE = "./%s/extensions-%s.sh" % (DT, DATE_TIME)
 AUTH_TXT = "./%s/auth-%s.txt" % (DT, DATE_TIME)
-
 
 def csv_delim(file_obj):
 
@@ -47,7 +45,6 @@ def csv_delim(file_obj):
 
         return ',' if comma_count >= semicolon_count else ';'
 
-
 col_1, col_2 = st.columns([8, 1])
 
 with col_1:
@@ -57,16 +54,16 @@ with col_2:
     with st.popover("❓"):
         st.markdown("""
         ### About
-        This app:
-        - Reads data from csv file with following format:
-            MAC,EXTENTION,CSP,LIM,Name1,Name2
-        - Generate shell script for MX-ONE extensions creation
+        MX-ONE Extensions Config Generator v%s:
+        - Reads data from csv file with the following format:
+            - MAC,EXTENTION,CSP,LIM,Name1,Name2
+        - Generates shell script for MX-ONE extensions creation
         - Generates config files for SIP-phones (Mitel 6800/6900, Fanvil X303)
         - Encrypts config files for deployment
         
         
         **Source:** https://github.com/2a-stra/mxone-auth-code
-        """)
+        """ % gen.VERSION)
 
 st.set_page_config(page_title="Config Generator", layout="wide")
 st.title("MX-ONE Extensions Config Generator")
@@ -106,7 +103,7 @@ if uploaded:
         tmp_path = tmp.name
 
     # Parse rows
-    rows, warnings, errors = read_rows(tmp_path, detected_delimiter)
+    rows, warnings, errors = gen.read_rows(tmp_path, detected_delimiter)
 
     st.subheader("Imported Rows Preview")
 
@@ -144,7 +141,7 @@ if uploaded:
             st.warning("No rows to process.")
         else:
             with st.spinner("Processing..."):
-                generated_files, gen_errors = process_rows(
+                generated_files, gen_errors = gen.process_rows(
                     rows, DT, EXTENSION_FILE, AUTH_TXT
                 )
 
@@ -218,7 +215,7 @@ if uploaded:
             else:
                 with st.spinner("Encrypting configuration files..."):
                     try:
-                        outputs, encr_errors = encrypt_config(rows, DT)
+                        outputs, encr_errors = gen.encrypt_config(rows, DT)
                         st.success("Encryption completed successfully.")
                     except Exception as e:
                         st.error(f"Encryption failed: {e}")
@@ -235,7 +232,7 @@ if uploaded:
                         for e in encr_errors:
                             st.write("•", e)
 
-            st.session_state.encrypted_files = encr_files(st.session_state.generated_files, "%s/"%DT)
+            st.session_state.encrypted_files = gen.encr_files(st.session_state.generated_files, "%s/"%DT)
 
     if st.session_state.encrypted_files:
 
