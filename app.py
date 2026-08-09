@@ -11,12 +11,14 @@ from datetime import datetime
 import streamlit as st
 import csv
 import tempfile
+#from PIL import Image
 
 import zipfile
 from pathlib import Path
 from io import BytesIO
 from zoneinfo import ZoneInfo
 
+#from gen_ext_conf import read_rows, process_rows, encrypt_config, encr_files
 import gen_ext_conf as gen
 
 now = datetime.now(ZoneInfo("Asia/Yerevan"))  # current date and time
@@ -52,18 +54,7 @@ with col_1:
 
 with col_2:
     with st.popover("❓"):
-        st.markdown("""
-        ### About
-        MX-ONE Extensions Config Generator v%s:
-        - Reads data from csv file with the following format:
-            - MAC,EXTENTION,CSP,LIM,Name1,Name2
-        - Generates shell script for MX-ONE extensions creation
-        - Generates config files for SIP-phones (Mitel 6800/6900, Fanvil X303)
-        - Encrypts config files for deployment
-        
-        
-        **Source:** https://github.com/2a-stra/mxone-auth-code
-        """ % gen.VERSION)
+        st.markdown(gen.ABOUT % gen.VERSION)
 
 st.set_page_config(page_title="Config Generator", layout="wide")
 st.title("MX-ONE Extensions Config Generator")

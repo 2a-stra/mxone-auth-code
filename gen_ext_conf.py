@@ -30,7 +30,20 @@ from subprocess import run
 import config as CFG
 
 TEST = True
-VERSION = 2.1
+VERSION = 2.2
+ABOUT = """
+### About
+MX-ONE Extensions Config Generator v%s:
+- Reads data from csv file with the following format:
+    - MAC,EXTENTION,CSP,LIM,Name1,Name2
+- Generates shell script for MX-ONE extensions creation
+- Generates config files for SIP-phones (Mitel 6800/6900, Fanvil X303)
+- Encrypts config files for deployment
+
+
+Source:
+https://github.com/2a-stra/mxone-auth-code
+"""
 
 
 def gen_pass(DIGITS: int) -> str:
@@ -193,6 +206,14 @@ def read_rows(file_name, delim):
                 )
                 continue
 
+            # Skip line if lim is not in CFG.SIP_PROXY
+            lim = lim.strip()
+            if lim not in CFG.SIP_PROXY:
+                errors.append(
+                    f"Line {lineno}: Unknown LIM no. '{lim}' in config.py -> {line.strip()}"
+                )
+                continue
+
             # Normalize and check MACs
             mac = mac.replace(":", "").strip()
 
@@ -287,10 +308,18 @@ def process_rows(rows, DT, ext_sh, auth_txt):
         ac.write("printf '\\nCreating auth codes...\\n'\n")
     for r in rows:
         try:
+            # Check if the key exists in SIP_PROXY first
+            lim_num = r["lim"]
+            if lim_num not in CFG.SIP_PROXY:
+                errors.append(
+                    f"Line {r['lineno']}: SIP proxy for LIM '{lim_num}' not found"
+                )
+                continue
+
             code = gen_pass(CFG.DIGITS)
 
             vendor = r["mac"][:6]
-            sip = CFG.SIP_PROXY[r["lim"]]
+            sip = CFG.SIP_PROXY[lim_num]
 
             if vendor.upper() == CFG.MAC_MITEL:
                 gen_conf_mitel(r["mac"], r["ext"], sip, code, DT, generated)
@@ -346,7 +375,7 @@ def encrypt_config(rows, DT):
     # Encrypt Fanvil
     try:
         for r in rows:
-            if r["mac"][:6] == CFG.MAC_FANVIL:
+            if r["mac"][:6].upper() == CFG.MAC_FANVIL:
                 txt = r["mac"].lower() + ".txt"
                 encrypted = r["mac"].lower() + ".cfg"
 
@@ -381,10 +410,11 @@ def encr_files(generated: list[str], pre: str) -> list[str]:
 
 if __name__ == "__main__":
 
+    print(ABOUT % VERSION)
+
     try:
         MAC_FNAME = sys.argv[1]
     except:
-        print("MX-ONE Extensions Config Generator v%s\n (https://github.com/2a-stra/mxone-auth-code)\n" % VERSION)
         print("Using default 'test_mac.csv' file for input")
         MAC_FNAME = "test_mac.csv"
 
@@ -426,8 +456,12 @@ if __name__ == "__main__":
 
     # TEST
     if TEST:
-        print(encr_files(generated, "%s/"%DT))
+        e_files = encr_files(generated, "%s/"%DT)
+        print(e_files)
+        #print(rows)
         print("\nTest exit!")
+        #outputs, errors = encrypt_config(rows, DT)
+        #print(outputs, errors)
         sys.exit(0)
 
     encrypt_config(rows, DT)
